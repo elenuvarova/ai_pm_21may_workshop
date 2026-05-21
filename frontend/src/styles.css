@@ -1,0 +1,48 @@
+:root {
+  color-scheme: dark;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #0b0d12;
+  color: #e6e6e6;
+}
+
+.app {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1.25rem;
+}
+
+h1 {
+  margin: 0 0 0.25rem;
+}
+
+.muted {
+  color: #8a8f99;
+}
+
+.card {
+  background: #14171f;
+  border: 1px solid #232733;
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin-top: 1rem;
+}
+
+.card h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+}
+
+.card pre {
+  margin: 0;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.error {
+  color: #ff7a7a;
+}
