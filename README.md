@@ -1,14 +1,15 @@
 # Dutch Trainer
 
-Тренажёр голландского для expat'ов в Бельгии/Нидерландах. Два режима: **sterke werkwoorden** (неправильные глаголы, 3 формы) и **het/de** (артикли существительных). Spaced repetition. База — 120 глаголов и 200 существительных (50 het + 50 de) из повседневной лексики.
+A Dutch trainer for expats in Belgium and the Netherlands. Two tabs: **Sterke werkwoorden** (irregular verbs — 3 forms) and **Het of de** (noun articles). Spaced repetition. Seeded with 150 irregular verbs and 300 everyday nouns (150 het / 150 de).
 
 ## Stack
 
-- **Frontend:** React 18 + Vite 5 (JSX, без TypeScript)
+- **Frontend:** React 18 + Vite 5 (plain JavaScript / JSX)
 - **Backend:** Node.js + Express, ES modules
 - **ORM:** Sequelize
-- **Database:** SQLite локально, Postgres на Render
-- **Deploy:** Render free tier (web + Postgres), provision через `render.yaml`
+- **Database:** SQLite locally, Postgres on Render (selected at runtime from `DATABASE_URL`)
+- **Deploy:** Render free tier (web + Postgres), provisioned via `render.yaml`
+- **Container:** Docker is used only by Render's build — local dev does not need it
 
 ## Project structure
 
@@ -19,7 +20,7 @@
 │   │   ├── Verb.js
 │   │   ├── Noun.js
 │   │   └── Stats.js
-│   ├── seed.js          # 120 verbs + 200 nouns
+│   ├── seed.js          # 150 verbs + 300 nouns
 │   ├── srs.js           # SRS intervals + streak logic
 │   ├── db.js
 │   ├── server.js        # /api/queue, /api/answer, /api/stats
@@ -46,17 +47,19 @@
 
 ## Local development
 
-Нужны два терминала. Базу ставить не надо — SQLite встроен.
+No database to install — SQLite is built in. The backend creates `backend/data.sqlite` on first boot and seeds it.
+
+Open two terminals.
 
 **Terminal 1 — backend:**
 
 ```bash
 cd backend
 npm install
-npm run dev    # на Node 18+; на Node 17 — npm start
+npm run dev    # requires Node 18+ for --watch; on Node 17 use npm start
 ```
 
-Бэк поднимается на `:3001`, при первом запуске сидит БД из `seed.js` (60 глаголов + 100 существительных). Файл `backend/data.sqlite` создаётся автоматически.
+Backend listens on `:3001`. On first boot it seeds the database from `seed.js` (150 verbs + 300 nouns). Reseeds are idempotent — re-running just updates the `meaning` column on existing rows, so user progress (level / next_review / attempts) survives content edits.
 
 **Terminal 2 — frontend:**
 
@@ -66,29 +69,29 @@ npm install
 npm run dev
 ```
 
-Открыть <http://localhost:5173>. Vite проксирует `/api/*` на `:3001`.
+Open <http://localhost:5173>. Vite proxies `/api/*` to the backend on port 3001.
 
 ## Deploy to Render
 
-1. Push в GitHub.
-2. Render → **New → Blueprint**, подключить репо.
-3. Render читает [render.yaml](render.yaml): провижит бесплатный Postgres `ai-workshop-db`, билдит Docker-образ, стартует web-service `ai-workshop-web` с уже подключенным `DATABASE_URL`.
+1. Push the repo to GitHub.
+2. In Render, click **New → Blueprint** and connect the repo.
+3. Render reads [render.yaml](render.yaml), provisions the free Postgres database `ai-workshop-db`, builds the Docker image, and starts the web service `ai-workshop-web` with `DATABASE_URL` already wired up.
 
-Про free tier:
+Free tier notes:
 
-- Web-service **засыпает после ~15 минут простоя** — первый запрос потом ~30 сек.
-- Free Postgres **истекает через 30 дней** — Render предупредит письмом.
+- The web service **sleeps after ~15 minutes of inactivity** — the first request after idle takes ~30 seconds (cold start).
+- The free Postgres database **expires after 30 days** — Render emails you in advance.
 
 ## Endpoints
 
-- `GET /api/health` — проверка БД, возвращает `{status, db}`.
-- `GET /api/queue?kind=verb|noun&limit=10` — слова, готовые к повтору (`next_review <= now`, не mastered).
-- `POST /api/answer {kind, key, userPast, userParticiple}` (verb) или `{kind, key, userArticle}` (noun) — сервер проверяет, обновляет SRS-уровень и stats, возвращает `{correct, correctAnswer, meaning_ru, newLevel, nextReview}`.
-- `GET /api/stats` — streak, done_today, counts по {new, learning, review, mastered} для глаголов и существительных.
-- В production: `GET /*` отдаёт билд фронта из `backend/public/`.
+- `GET /api/health` — verifies the DB connection, returns `{status, db}`.
+- `GET /api/queue?kind=verb|noun&limit=10` — words due for review (`next_review <= now`, not mastered). Order: oldest due first, then `RANDOM()` to mix ties.
+- `POST /api/answer` — `{kind, key, userPast, userParticiple}` for verbs or `{kind, key, userArticle}` for nouns. Server validates (case-insensitive, trimmed), updates the SRS level and stats in a single transaction, and returns `{correct, correctAnswer, meaning, newLevel, nextReview}`.
+- `GET /api/stats` — streak, done_today, and counts for `{new, learning, review, mastered}` per kind.
+- In production, `GET /*` serves the built frontend from `backend/public/`.
 
 ## SRS
 
-- `correct`: `level+1`, интервалы `[10min, 1d, 3d, 7d, 21d]` индексируются по предыдущему `level`. Уровень 5 — mastered, исключается из очереди.
-- `wrong`: `level → 1`, `next_review = now + 10min`.
-- Streak считается по UTC-дате: same-day → done_today++; +1 day → streak++; больше дня — streak обнуляется до 1.
+- **Correct:** `level + 1`, with intervals `[10min, 1d, 3d, 7d, 21d]` indexed by the previous level. Level 5 is mastered and excluded from the queue.
+- **Wrong:** `level → 1`, `next_review = now + 10min`.
+- **Streak** runs on UTC days: same day → `done_today++`; next day → `streak++`; longer gap → streak resets to 1.
