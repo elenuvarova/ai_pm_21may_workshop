@@ -1,6 +1,6 @@
 # Dutch Trainer
 
-Тренажёр голландского для expat'ов в Бельгии/Нидерландах. Два режима: **sterke werkwoorden** (неправильные глаголы, 3 формы) и **het/de** (артикли существительных). Spaced repetition. Объяснения по запросу — на русском, с примером во фламандском, через Claude Haiku.
+Тренажёр голландского для expat'ов в Бельгии/Нидерландах. Два режима: **sterke werkwoorden** (неправильные глаголы, 3 формы) и **het/de** (артикли существительных). Spaced repetition. База — 60 глаголов и 100 существительных (50 het + 50 de) из повседневной лексики.
 
 ## Stack
 
@@ -8,7 +8,6 @@
 - **Backend:** Node.js + Express, ES modules
 - **ORM:** Sequelize
 - **Database:** SQLite локально, Postgres на Render
-- **LLM:** Claude Haiku 4.5 для кнопки «Why?» — серверный прокси, ключ не утекает в браузер
 - **Deploy:** Render free tier (web + Postgres), provision через `render.yaml`
 
 ## Project structure
@@ -20,10 +19,10 @@
 │   │   ├── Verb.js
 │   │   ├── Noun.js
 │   │   └── Stats.js
-│   ├── seed.js          # 30 verbs + 40 nouns
+│   ├── seed.js          # 60 verbs + 100 nouns
 │   ├── srs.js           # SRS intervals + streak logic
 │   ├── db.js
-│   ├── server.js        # /api/queue, /api/answer, /api/stats, /api/explain
+│   ├── server.js        # /api/queue, /api/answer, /api/stats
 │   └── package.json
 ├── frontend/
 │   ├── src/
@@ -31,8 +30,7 @@
 │   │   │   ├── TabBar.jsx
 │   │   │   ├── ProgressBar.jsx
 │   │   │   ├── VerbCard.jsx
-│   │   │   ├── NounCard.jsx
-│   │   │   └── WhyPanel.jsx
+│   │   │   └── NounCard.jsx
 │   │   ├── api.js
 │   │   ├── App.jsx
 │   │   ├── main.jsx
@@ -58,7 +56,7 @@ npm install
 npm run dev    # на Node 18+; на Node 17 — npm start
 ```
 
-Бэк поднимается на `:3001`, при первом запуске сидит БД из `seed.js` (30 глаголов + 40 существительных). Файл `backend/data.sqlite` создаётся автоматически.
+Бэк поднимается на `:3001`, при первом запуске сидит БД из `seed.js` (60 глаголов + 100 существительных). Файл `backend/data.sqlite` создаётся автоматически.
 
 **Terminal 2 — frontend:**
 
@@ -70,16 +68,11 @@ npm run dev
 
 Открыть <http://localhost:5173>. Vite проксирует `/api/*` на `:3001`.
 
-### Чтобы заработала кнопка «Why?»
-
-Скопируй [.env.example](.env.example) в `.env` в корне или в `backend/.env`, впиши `ANTHROPIC_API_KEY=sk-ant-...` (получить на [console.anthropic.com](https://console.anthropic.com)). Без ключа `/api/explain` отдаёт 503 и фронт показывает плейсхолдер — остальное работает.
-
 ## Deploy to Render
 
 1. Push в GitHub.
 2. Render → **New → Blueprint**, подключить репо.
 3. Render читает [render.yaml](render.yaml): провижит бесплатный Postgres `ai-workshop-db`, билдит Docker-образ, стартует web-service `ai-workshop-web` с уже подключенным `DATABASE_URL`.
-4. **Ручной шаг:** в Render dashboard → Environment → ввести `ANTHROPIC_API_KEY` (он помечен `sync: false`, в репо не коммитится).
 
 Про free tier:
 
@@ -92,7 +85,6 @@ npm run dev
 - `GET /api/queue?kind=verb|noun&limit=10` — слова, готовые к повтору (`next_review <= now`, не mastered).
 - `POST /api/answer {kind, key, userPast, userParticiple}` (verb) или `{kind, key, userArticle}` (noun) — сервер проверяет, обновляет SRS-уровень и stats, возвращает `{correct, correctAnswer, meaning_ru, newLevel, nextReview}`.
 - `GET /api/stats` — streak, done_today, counts по {new, learning, review, mastered} для глаголов и существительных.
-- `POST /api/explain {kind, key}` — Claude-разбор слова. Кэшируется в БД на первом вызове.
 - В production: `GET /*` отдаёт билд фронта из `backend/public/`.
 
 ## SRS

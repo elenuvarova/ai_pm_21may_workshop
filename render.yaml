@@ -20,5 +20,3 @@ services:
         fromDatabase:
           name: ai-workshop-db
           property: connectionString
-      - key: ANTHROPIC_API_KEY
-        sync: false

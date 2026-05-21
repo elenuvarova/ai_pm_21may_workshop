@@ -2,7 +2,6 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { Op } from "sequelize";
-import Anthropic from "@anthropic-ai/sdk";
 import { sequelize, dbKind } from "./db.js";
 import { Verb } from "./models/Verb.js";
 import { Noun } from "./models/Noun.js";
@@ -141,47 +140,6 @@ app.get("/api/stats", async (_req, res) => {
     verbs,
     nouns,
   });
-});
-
-app.post("/api/explain", async (req, res) => {
-  const { kind, key } = req.body || {};
-  const Model = modelFor(kind);
-  if (!Model) return res.status(400).json({ error: "kind must be verb or noun" });
-  if (!key) return res.status(400).json({ error: "key required" });
-
-  const row = await Model.findByPk(key);
-  if (!row) return res.status(404).json({ error: "not found" });
-
-  if (row.explanation) {
-    return res.json({ explanation: row.explanation, cached: true });
-  }
-
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(503).json({
-      error:
-        "ANTHROPIC_API_KEY not configured. Set it in .env locally or in Render dashboard.",
-    });
-  }
-
-  const word = kind === "verb" ? row.infinitive : row.word;
-  const what = kind === "verb" ? "this verb pattern (past + participle forms)" : `the article "${row.article}"`;
-  const prompt = `Explain in Russian why "${word}" uses ${what}. Give the rule (if any) and one example sentence in Flemish Dutch. Keep it under 80 words.`;
-
-  try {
-    const client = new Anthropic();
-    const msg = await client.messages.create({
-      model: "claude-haiku-4-5-20251001",
-      max_tokens: 1000,
-      messages: [{ role: "user", content: prompt }],
-    });
-    const explanation = msg.content[0].text;
-    row.explanation = explanation;
-    await row.save();
-    res.json({ explanation, cached: false });
-  } catch (err) {
-    console.error("/api/explain:", err);
-    res.status(502).json({ error: `Claude API error: ${err.message}` });
-  }
 });
 
 if (process.env.NODE_ENV === "production") {

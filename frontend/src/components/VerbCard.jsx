@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import { submitAnswer } from "../api.js";
-import WhyPanel from "./WhyPanel.jsx";
 
 export default function VerbCard({ item, onAnswered, onNext }) {
   const [past, setPast] = useState("");
@@ -86,12 +85,11 @@ export default function VerbCard({ item, onAnswered, onNext }) {
           <p className="meaning">{feedback.meaning_ru}</p>
           <div className="actions">
             <button className="btn" onClick={onNext}>Next</button>
-            <WhyPanel kind="verb" itemKey={item.key} />
           </div>
         </div>
       )}
 
-      {feedback?.error && <p className="why-panel muted">Ошибка: {feedback.error}</p>}
+      {feedback?.error && <p className="error-box">Ошибка: {feedback.error}</p>}
     </section>
   );
 }

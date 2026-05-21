@@ -23,6 +23,3 @@ export const submitAnswer = (payload) =>
   req("/api/answer", { method: "POST", body: JSON.stringify(payload) });
 
 export const getStats = () => req("/api/stats");
-
-export const explain = (kind, key) =>
-  req("/api/explain", { method: "POST", body: JSON.stringify({ kind, key }) });

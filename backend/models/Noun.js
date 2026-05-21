@@ -15,7 +15,6 @@ export const Noun = sequelize.define(
     next_review: { type: DataTypes.DATE, allowNull: true },
     attempts: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     mistakes: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    explanation: { type: DataTypes.TEXT, allowNull: true },
   },
   { tableName: "nouns", timestamps: false }
 );
