@@ -48,7 +48,9 @@ app.get("/api/queue", async (req, res) => {
       level: { [Op.lt]: MASTERED_LEVEL },
       next_review: { [Op.lte]: now },
     },
-    order: [["next_review", "ASC"]],
+    // RANDOM() tiebreaker so freshly-seeded items (all sharing next_review = seed time)
+    // don't come back grouped by insertion order. Both SQLite and Postgres support RANDOM().
+    order: [["next_review", "ASC"], sequelize.literal("RANDOM()")],
     limit,
   });
   const items = rows.map((r) => (kind === "verb" ? publicVerb(r) : publicNoun(r)));

@@ -1,6 +1,6 @@
 # Dutch Trainer
 
-Тренажёр голландского для expat'ов в Бельгии/Нидерландах. Два режима: **sterke werkwoorden** (неправильные глаголы, 3 формы) и **het/de** (артикли существительных). Spaced repetition. База — 60 глаголов и 100 существительных (50 het + 50 de) из повседневной лексики.
+Тренажёр голландского для expat'ов в Бельгии/Нидерландах. Два режима: **sterke werkwoorden** (неправильные глаголы, 3 формы) и **het/de** (артикли существительных). Spaced repetition. База — 120 глаголов и 200 существительных (50 het + 50 de) из повседневной лексики.
 
 ## Stack
 
@@ -19,7 +19,7 @@
 │   │   ├── Verb.js
 │   │   ├── Noun.js
 │   │   └── Stats.js
-│   ├── seed.js          # 60 verbs + 100 nouns
+│   ├── seed.js          # 120 verbs + 200 nouns
 │   ├── srs.js           # SRS intervals + streak logic
 │   ├── db.js
 │   ├── server.js        # /api/queue, /api/answer, /api/stats
