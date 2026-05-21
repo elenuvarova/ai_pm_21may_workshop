@@ -1,6 +1,6 @@
 # Dutch Trainer
 
-A Dutch trainer for expats in Belgium and the Netherlands. Two tabs: **Sterke werkwoorden** (irregular verbs — 3 forms) and **Het of de** (noun articles). Spaced repetition. Seeded with 150 irregular verbs and 300 everyday nouns (150 het / 150 de).
+A Dutch trainer for expats in Belgium and the Netherlands. Two tabs: **Sterke werkwoorden** (irregular verbs — 3 forms) and **Het of de** (noun articles). Spaced repetition. Seeded with 200 irregular verbs and 500 everyday nouns (250 het / 250 de).
 
 ## Stack
 
@@ -20,7 +20,7 @@ A Dutch trainer for expats in Belgium and the Netherlands. Two tabs: **Sterke we
 │   │   ├── Verb.js
 │   │   ├── Noun.js
 │   │   └── Stats.js
-│   ├── seed.js          # 150 verbs + 300 nouns
+│   ├── seed.js          # 200 verbs + 500 nouns
 │   ├── srs.js           # SRS intervals + streak logic
 │   ├── db.js
 │   ├── server.js        # /api/queue, /api/answer, /api/stats
@@ -59,7 +59,7 @@ npm install
 npm run dev    # requires Node 18+ for --watch; on Node 17 use npm start
 ```
 
-Backend listens on `:3001`. On first boot it seeds the database from `seed.js` (150 verbs + 300 nouns). Reseeds are idempotent — re-running just updates the `meaning` column on existing rows, so user progress (level / next_review / attempts) survives content edits.
+Backend listens on `:3001`. On first boot it seeds the database from `seed.js` (200 verbs + 500 nouns). Reseeds are idempotent — re-running just updates the `meaning` column on existing rows, so user progress (level / next_review / attempts) survives content edits.
 
 **Terminal 2 — frontend:**
 
