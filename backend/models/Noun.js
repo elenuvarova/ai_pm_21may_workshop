@@ -10,7 +10,7 @@ export const Noun = sequelize.define(
       allowNull: false,
       validate: { isIn: [["het", "de"]] },
     },
-    meaning_ru: { type: DataTypes.STRING, allowNull: false },
+    meaning: { type: DataTypes.STRING, allowNull: false },
     level: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     next_review: { type: DataTypes.DATE, allowNull: true },
     attempts: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },

@@ -30,10 +30,10 @@ function modelFor(kind) {
 }
 
 function publicVerb(v) {
-  return { kind: "verb", key: v.infinitive, infinitive: v.infinitive, meaning_ru: v.meaning_ru, level: v.level };
+  return { kind: "verb", key: v.infinitive, infinitive: v.infinitive, meaning: v.meaning, level: v.level };
 }
 function publicNoun(n) {
-  return { kind: "noun", key: n.word, word: n.word, meaning_ru: n.meaning_ru, level: n.level };
+  return { kind: "noun", key: n.word, word: n.word, meaning: n.meaning, level: n.level };
 }
 
 app.get("/api/queue", async (req, res) => {
@@ -107,7 +107,7 @@ app.post("/api/answer", async (req, res) => {
       stats.last_session_date = upd.last_session_date;
       await stats.save({ transaction: t });
 
-      return { correct, correctAnswer, meaning_ru: row.meaning_ru, newLevel, nextReview };
+      return { correct, correctAnswer, meaning: row.meaning, newLevel, nextReview };
     });
     res.json(result);
   } catch (err) {
@@ -154,8 +154,23 @@ if (process.env.NODE_ENV === "production") {
 
 const port = process.env.PORT || 3001;
 
+// One-time rename for deploys that already have the old column name.
+// Silently no-ops on fresh DBs and on already-migrated DBs.
+async function renameLegacyMeaningColumn() {
+  const qi = sequelize.getQueryInterface();
+  for (const table of ["verbs", "nouns"]) {
+    try {
+      await qi.renameColumn(table, "meaning_ru", "meaning");
+      console.log(`Migration: ${table}.meaning_ru → meaning`);
+    } catch {
+      // column already named "meaning" or table just got created with the new name
+    }
+  }
+}
+
 async function start() {
   await sequelize.sync();
+  await renameLegacyMeaningColumn();
   const seedResult = await seedIfNeeded();
   console.log(
     `Seed: +${seedResult.verbsAdded} verbs (total ${seedResult.verbsTotal}), ` +

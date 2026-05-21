@@ -61,7 +61,7 @@ function TrainerTab({ kind }) {
     return (
       <>
         <ProgressBar counts={counts} />
-        <div className="empty">Ошибка: {error}</div>
+        <div className="empty">Error: {error}</div>
       </>
     );
   }
@@ -70,10 +70,10 @@ function TrainerTab({ kind }) {
       <>
         <ProgressBar counts={counts} />
         <div className="empty">
-          Готово на сегодня.
+          All done for today.
           {nextDueAt && (
             <div className="next-due">
-              Следующее повторение: {new Date(nextDueAt).toLocaleString("ru-RU")}
+              Next review: {new Date(nextDueAt).toLocaleString("en-GB")}
             </div>
           )}
         </div>
@@ -111,7 +111,7 @@ export default function App() {
       <header className="header">
         <h1>Dutch Trainer</h1>
         <span className="streak">
-          {globalStats ? `streak ${globalStats.streak} · ${globalStats.done_today} сегодня` : "—"}
+          {globalStats ? `streak ${globalStats.streak} · ${globalStats.done_today} today` : "—"}
         </span>
       </header>
       <TabBar active={tab} onChange={setTab} />

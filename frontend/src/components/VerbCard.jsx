@@ -78,18 +78,18 @@ export default function VerbCard({ item, onAnswered, onNext }) {
 
       {feedback && !feedback.error && (
         <div className={`feedback ${feedback.correct ? "correct" : "wrong"}`}>
-          <p className="verdict">{feedback.correct ? "Правильно" : "Ошибка"}</p>
+          <p className="verdict">{feedback.correct ? "Correct" : "Wrong"}</p>
           <p className="answer">
             {feedback.correctAnswer.past} · {feedback.correctAnswer.participle}
           </p>
-          <p className="meaning">{feedback.meaning_ru}</p>
+          <p className="meaning">{feedback.meaning}</p>
           <div className="actions">
             <button className="btn" onClick={onNext}>Next</button>
           </div>
         </div>
       )}
 
-      {feedback?.error && <p className="error-box">Ошибка: {feedback.error}</p>}
+      {feedback?.error && <p className="error-box">Error: {feedback.error}</p>}
     </section>
   );
 }
