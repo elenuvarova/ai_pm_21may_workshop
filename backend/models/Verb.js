@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db.js";
 
+// Shared dictionary — per-user state lives in VerbProgress.
 export const Verb = sequelize.define(
   "Verb",
   {
@@ -8,10 +9,6 @@ export const Verb = sequelize.define(
     past: { type: DataTypes.STRING, allowNull: false },
     participle: { type: DataTypes.STRING, allowNull: false },
     meaning: { type: DataTypes.STRING, allowNull: false },
-    level: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    next_review: { type: DataTypes.DATE, allowNull: true },
-    attempts: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    mistakes: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   },
   { tableName: "verbs", timestamps: false }
 );

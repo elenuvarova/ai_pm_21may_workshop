@@ -1,6 +1,6 @@
 # Dutch Trainer
 
-A Dutch trainer for expats in Belgium and the Netherlands. Two tabs: **Sterke werkwoorden** (irregular verbs — 3 forms) and **Het of de** (noun articles). Spaced repetition. Seeded with 200 irregular verbs and 500 everyday nouns (250 het / 250 de).
+A Dutch trainer for expats in Belgium and the Netherlands. Two tabs: **Sterke werkwoorden** (irregular verbs — 3 forms) and **Het of de** (noun articles). Spaced repetition. Seeded with 200 irregular verbs and 500 everyday nouns (250 het / 250 de). Every visitor gets a private session via an anonymous cookie — share the URL and the recipient gets their own progress without any login.
 
 ## Stack
 
@@ -17,9 +17,11 @@ A Dutch trainer for expats in Belgium and the Netherlands. Two tabs: **Sterke we
 .
 ├── backend/
 │   ├── models/
-│   │   ├── Verb.js
-│   │   ├── Noun.js
-│   │   └── Stats.js
+│   │   ├── Verb.js            # shared dictionary
+│   │   ├── Noun.js            # shared dictionary
+│   │   ├── VerbProgress.js    # (user_id, infinitive) → level, next_review, …
+│   │   ├── NounProgress.js    # (user_id, word) → level, next_review, …
+│   │   └── Stats.js           # one row per user (streak, done_today)
 │   ├── seed.js          # 200 verbs + 500 nouns
 │   ├── srs.js           # SRS intervals + streak logic
 │   ├── db.js
@@ -95,3 +97,7 @@ Free tier notes:
 - **Correct:** `level + 1`, with intervals `[10min, 1d, 3d, 7d, 21d]` indexed by the previous level. Level 5 is mastered and excluded from the queue.
 - **Wrong:** `level → 1`, `next_review = now + 10min`.
 - **Streak** runs on UTC days: same day → `done_today++`; next day → `streak++`; longer gap → streak resets to 1.
+
+## Sessions
+
+There is no signup or login. The first request from a browser without a `dt_uid` cookie generates a UUID, sets the cookie (`HttpOnly, SameSite=Lax, 1 year`), and bulk-creates that user's progress rows (one per word). All subsequent requests carry the cookie and the API scopes every read and write by that `user_id`. Clearing cookies = fresh start. The shared `verbs` / `nouns` tables stay as a read-only dictionary.

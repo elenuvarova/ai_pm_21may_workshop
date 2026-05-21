@@ -1,14 +1,15 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db.js";
 
-// Single-row table for global stats (no auth in MVP, one shared user).
+// One row per anonymous cookie user. The previous singleton `stats` table
+// is left orphan in DBs that had it — harmless, just unused.
 export const Stats = sequelize.define(
   "Stats",
   {
-    id: { type: DataTypes.INTEGER, primaryKey: true, defaultValue: 1 },
+    user_id: { type: DataTypes.STRING, primaryKey: true },
     streak: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
     last_session_date: { type: DataTypes.DATEONLY, allowNull: true },
     done_today: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   },
-  { tableName: "stats", timestamps: false }
+  { tableName: "user_stats", timestamps: false }
 );

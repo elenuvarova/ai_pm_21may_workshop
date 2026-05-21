@@ -1,6 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db.js";
 
+// Shared dictionary — per-user state lives in NounProgress.
 export const Noun = sequelize.define(
   "Noun",
   {
@@ -11,10 +12,6 @@ export const Noun = sequelize.define(
       validate: { isIn: [["het", "de"]] },
     },
     meaning: { type: DataTypes.STRING, allowNull: false },
-    level: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    next_review: { type: DataTypes.DATE, allowNull: true },
-    attempts: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
-    mistakes: { type: DataTypes.INTEGER, allowNull: false, defaultValue: 0 },
   },
   { tableName: "nouns", timestamps: false }
 );

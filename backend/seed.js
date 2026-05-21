@@ -706,21 +706,15 @@ export const SEED_NOUNS = [
 
 import { Verb } from "./models/Verb.js";
 import { Noun } from "./models/Noun.js";
-import { Stats } from "./models/Stats.js";
 
 export async function seedIfNeeded() {
-  const now = new Date();
-  const verbRows = SEED_VERBS.map((v) => ({ ...v, next_review: now }));
-  const nounRows = SEED_NOUNS.map((n) => ({ ...n, next_review: now }));
-
   const [verbsBefore, nounsBefore] = await Promise.all([Verb.count(), Noun.count()]);
 
-  // updateOnDuplicate refreshes the meaning column on existing rows (e.g. when we
-  // change a translation) without touching level/next_review/attempts/mistakes —
-  // so user progress survives content edits across deploys.
-  await Verb.bulkCreate(verbRows, { updateOnDuplicate: ["meaning"] });
-  await Noun.bulkCreate(nounRows, { updateOnDuplicate: ["meaning"] });
-  await Stats.findOrCreate({ where: { id: 1 }, defaults: { id: 1 } });
+  // updateOnDuplicate refreshes the meaning column on existing rows so content
+  // edits propagate across deploys. Per-user progress lives in verb_progress /
+  // noun_progress and is untouched here.
+  await Verb.bulkCreate(SEED_VERBS, { updateOnDuplicate: ["meaning"] });
+  await Noun.bulkCreate(SEED_NOUNS, { updateOnDuplicate: ["meaning"] });
 
   const [verbsAfter, nounsAfter] = await Promise.all([Verb.count(), Noun.count()]);
   return {
