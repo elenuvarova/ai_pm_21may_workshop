@@ -78,7 +78,7 @@ export default function VerbCard({ item, onAnswered, onNext }) {
 
       {feedback && !feedback.error && (
         <div className={`feedback ${feedback.correct ? "correct" : "wrong"}`}>
-          <p className="verdict">{feedback.correct ? "Klopt!" : "Niet helemaal"}</p>
+          <p className="verdict">{feedback.correct ? "Правильно" : "Ошибка"}</p>
           <p className="answer">
             {feedback.correctAnswer.past} · {feedback.correctAnswer.participle}
           </p>
