@@ -1,53 +1,64 @@
-# AI PM Workshop Template
+# Dutch Trainer
 
-A minimal full-stack starter: React + Vite on the frontend, Express + Sequelize on the backend. SQLite locally so there's nothing to install; Postgres in production. Deploys to the Render free tier as a Blueprint — no credit card, no infra wiring.
+Тренажёр голландского для expat'ов в Бельгии/Нидерландах. Два режима: **sterke werkwoorden** (неправильные глаголы, 3 формы) и **het/de** (артикли существительных). Spaced repetition. Объяснения по запросу — на русском, с примером во фламандском, через Claude Haiku.
 
 ## Stack
 
-- **Frontend:** React 18 + Vite 5 (plain JavaScript / JSX)
+- **Frontend:** React 18 + Vite 5 (JSX, без TypeScript)
 - **Backend:** Node.js + Express, ES modules
 - **ORM:** Sequelize
-- **Database:** SQLite locally, Postgres on Render (selected at runtime from `DATABASE_URL`)
-- **Deploy:** Render free web service + free Postgres, provisioned via `render.yaml`
-- **Container:** Docker is used only by Render's build — local dev does not need it
+- **Database:** SQLite локально, Postgres на Render
+- **LLM:** Claude Haiku 4.5 для кнопки «Why?» — серверный прокси, ключ не утекает в браузер
+- **Deploy:** Render free tier (web + Postgres), provision через `render.yaml`
 
 ## Project structure
 
 ```
 .
 ├── backend/
-│   ├── package.json
-│   ├── server.js
-│   └── db.js
+│   ├── models/
+│   │   ├── Verb.js
+│   │   ├── Noun.js
+│   │   └── Stats.js
+│   ├── seed.js          # 30 verbs + 40 nouns
+│   ├── srs.js           # SRS intervals + streak logic
+│   ├── db.js
+│   ├── server.js        # /api/queue, /api/answer, /api/stats, /api/explain
+│   └── package.json
 ├── frontend/
-│   ├── package.json
-│   ├── vite.config.js
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── TabBar.jsx
+│   │   │   ├── ProgressBar.jsx
+│   │   │   ├── VerbCard.jsx
+│   │   │   ├── NounCard.jsx
+│   │   │   └── WhyPanel.jsx
+│   │   ├── api.js
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── styles.css
 │   ├── index.html
-│   └── src/
-│       ├── main.jsx
-│       ├── App.jsx
-│       └── styles.css
+│   ├── vite.config.js
+│   └── package.json
 ├── Dockerfile
 ├── render.yaml
 ├── .env.example
-├── .gitignore
-├── .dockerignore
 └── README.md
 ```
 
 ## Local development
 
-No database to install — SQLite is built in. The backend creates `backend/data.sqlite` on first boot.
-
-Open two terminals.
+Нужны два терминала. Базу ставить не надо — SQLite встроен.
 
 **Terminal 1 — backend:**
 
 ```bash
 cd backend
 npm install
-npm run dev
+npm run dev    # на Node 18+; на Node 17 — npm start
 ```
+
+Бэк поднимается на `:3001`, при первом запуске сидит БД из `seed.js` (30 глаголов + 40 существительных). Файл `backend/data.sqlite` создаётся автоматически.
 
 **Terminal 2 — frontend:**
 
@@ -57,21 +68,35 @@ npm install
 npm run dev
 ```
 
-Open <http://localhost:5173>. Vite proxies `/api/*` to the backend on port 3001.
+Открыть <http://localhost:5173>. Vite проксирует `/api/*` на `:3001`.
+
+### Чтобы заработала кнопка «Why?»
+
+Скопируй [.env.example](.env.example) в `.env` в корне или в `backend/.env`, впиши `ANTHROPIC_API_KEY=sk-ant-...` (получить на [console.anthropic.com](https://console.anthropic.com)). Без ключа `/api/explain` отдаёт 503 и фронт показывает плейсхолдер — остальное работает.
 
 ## Deploy to Render
 
-1. Push this repo to GitHub.
-2. In Render, click **New → Blueprint** and connect the repo.
-3. Render reads `render.yaml`, provisions the free Postgres database, builds the Docker image, and starts the web service with `DATABASE_URL` already wired up.
+1. Push в GitHub.
+2. Render → **New → Blueprint**, подключить репо.
+3. Render читает [render.yaml](render.yaml): провижит бесплатный Postgres `ai-workshop-db`, билдит Docker-образ, стартует web-service `ai-workshop-web` с уже подключенным `DATABASE_URL`.
+4. **Ручной шаг:** в Render dashboard → Environment → ввести `ANTHROPIC_API_KEY` (он помечен `sync: false`, в репо не коммитится).
 
-Things to know about the free tier:
+Про free tier:
 
-- The web service **sleeps after ~15 minutes of inactivity**, so the first request after idle takes ~30 seconds (cold start).
-- The free Postgres database **expires after 30 days** — Render will email you before it does.
+- Web-service **засыпает после ~15 минут простоя** — первый запрос потом ~30 сек.
+- Free Postgres **истекает через 30 дней** — Render предупредит письмом.
 
 ## Endpoints
 
-- `GET /api/health` — verifies the database connection. Returns `{ "status": "ok", "db": "sqlite" | "postgres" }`.
-- `GET /api/hello` — returns `{ "message": "Hello from the backend 👋" }`.
-- `GET /*` — in production, serves the built frontend from `backend/public/`.
+- `GET /api/health` — проверка БД, возвращает `{status, db}`.
+- `GET /api/queue?kind=verb|noun&limit=10` — слова, готовые к повтору (`next_review <= now`, не mastered).
+- `POST /api/answer {kind, key, userPast, userParticiple}` (verb) или `{kind, key, userArticle}` (noun) — сервер проверяет, обновляет SRS-уровень и stats, возвращает `{correct, correctAnswer, meaning_ru, newLevel, nextReview}`.
+- `GET /api/stats` — streak, done_today, counts по {new, learning, review, mastered} для глаголов и существительных.
+- `POST /api/explain {kind, key}` — Claude-разбор слова. Кэшируется в БД на первом вызове.
+- В production: `GET /*` отдаёт билд фронта из `backend/public/`.
+
+## SRS
+
+- `correct`: `level+1`, интервалы `[10min, 1d, 3d, 7d, 21d]` индексируются по предыдущему `level`. Уровень 5 — mastered, исключается из очереди.
+- `wrong`: `level → 1`, `next_review = now + 10min`.
+- Streak считается по UTC-дате: same-day → done_today++; +1 day → streak++; больше дня — streak обнуляется до 1.
