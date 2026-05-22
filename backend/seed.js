@@ -710,11 +710,14 @@ import { Noun } from "./models/Noun.js";
 export async function seedIfNeeded() {
   const [verbsBefore, nounsBefore] = await Promise.all([Verb.count(), Noun.count()]);
 
-  // updateOnDuplicate refreshes the meaning column on existing rows so content
-  // edits propagate across deploys. Per-user progress lives in verb_progress /
-  // noun_progress and is untouched here.
-  await Verb.bulkCreate(SEED_VERBS, { updateOnDuplicate: ["meaning"] });
-  await Noun.bulkCreate(SEED_NOUNS, { updateOnDuplicate: ["meaning"] });
+  // ignoreDuplicates skips rows that already exist by primary key. This is
+  // intentionally NOT updateOnDuplicate: on a free-tier Postgres without
+  // frequent autovacuum, an UPDATE on every existing row at every container
+  // start (Render free tier wakes/sleeps often) accumulates dead row versions
+  // and bloats the database. Changing a translation now requires either
+  // editing it in the DB by hand or temporarily flipping this back.
+  await Verb.bulkCreate(SEED_VERBS, { ignoreDuplicates: true });
+  await Noun.bulkCreate(SEED_NOUNS, { ignoreDuplicates: true });
 
   const [verbsAfter, nounsAfter] = await Promise.all([Verb.count(), Noun.count()]);
   return {
